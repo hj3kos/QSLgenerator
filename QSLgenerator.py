@@ -8,6 +8,7 @@ from datetime import date
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw 
+from PIL import ImageTk
 from tkinter import filedialog
 
 path_foto = ''
@@ -145,24 +146,16 @@ def Generador_Imagenes( dia,
     draw.text((1290,900),rcvd,fill=(63,81,181)+(OPACITY,),font=font)
     draw.text((1460,900),mode,fill=(63,81,181)+(OPACITY,),font=font)
     
-    draw.multiline_text((120,960),"Short message. 73",fill=(0,0,0)+(OPACITY,),font=font2,align='center')
+    draw.multiline_text((120,960),msgTextBox.get("1.0","end-1c"),fill=(0,0,0)+(OPACITY,),font=font2,align='center')
     
     img = Image.alpha_composite(img, overlay)
-    img.save(licencia+'_'+anio+'_'+mes+'_'+dia+'_'+'.png')
+    isExist = os.path.exists("qsl")
+    if not isExist:
+       os.makedirs("qsl")
+    img.save("qsl/"+licencia+'_'+anio+'_'+mes+'_'+dia+'.png')
 
 
-def getExcel ():
-    global df
-    global dia
-    global mes
-    global anio
-    global licencia
-    global hora
-    global mhz
-    global rst
-    global mod
-    global qsl
-    
+def getAdif ():
     import_file_path = filedialog.askopenfilename()
     shape = ReadADIF (import_file_path)
     cantidad = len(shape)
@@ -187,15 +180,25 @@ def getImage ():
         print(path_foto.name)
 
 root= tk.Tk()
-root.title("Generador de tarjetas QSL")
+root.resizable(0, 0)
+root.title("QSL Card Generator")
 
-canvas1 = tk.Canvas(root, width = 300, height = 300, bg = 'lightsteelblue')
+canvas1 = tk.Canvas(root, width = 800, height = 600)
 canvas1.pack()
-    
-loadImageButton = tk.Button(text='Load Image', command=getImage, bg='green', fg='white', font=('helvetica', 12, 'bold'))
-loadAdifButton = tk.Button(text='Load ADIF', command=getExcel, bg='green', fg='white', font=('helvetica', 12, 'bold'))
 
-canvas1.create_window(150, 150, window=loadImageButton)
-canvas1.create_window(150, 200, window=loadAdifButton)
+loadImageButton = tk.Button(text='Load Image', command=getImage, font=('helvetica', 12, 'bold'))
+loadImageButton.pack()
+loadAdifButton = tk.Button(text='Load ADIF', command=getAdif, font=('helvetica', 12, 'bold'))
+loadAdifButton.pack()
+msgTextBox = tk.Text(root, height = 1, width = 20)
+msgTextBox.pack()
+imgLabel = tk.Label(text = "Recomended resolution for images is 1800x1200 pixels and PNG format.")
+msgLabel = tk.Label(text = "Bottom Message.")
+
+canvas1.create_window(400, 50, window=imgLabel)
+canvas1.create_window(400, 75, window=msgLabel)
+canvas1.create_window(400, 100, window=msgTextBox)
+canvas1.create_window(400, 150, window=loadImageButton)
+canvas1.create_window(400, 200, window=loadAdifButton)
 
 root.mainloop()
