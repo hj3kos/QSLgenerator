@@ -176,9 +176,19 @@ def getAdif ():
         licencia = str(shape[i][headers.index("call")])
         hora =  str(shape[i][headers.index("time_on")][:2]+':'+shape[i][headers.index("time_on")][2:4])
         mhz =  str(shape[i][headers.index("freq")])
-        rcvd =  str(shape[i][headers.index("rst_rcvd")])
-        sent =  str(shape[i][headers.index("rst_sent")])
+        try:
+            rcvd =  str(shape[i][headers.index("rst_rcvd")])
+            int(rcvd)
+        except:
+            rcvd = "59"
+        try:
+            sent =  str(shape[i][headers.index("rst_sent")])
+            int(sent)
+        except:
+            sent = "59"
         mode =  str(shape[i][headers.index("mode")])
+        if mode.lower() == "digitalvoice":
+            mode = "D.VOICE"
         print(dia+''+mes+''+anio+''+licencia+''+hora+''+mhz+''+sent+''+rcvd+''+mode)
         Generador_Imagenes(dia,mes,anio,licencia,hora,mhz,sent,rcvd,mode)
 
