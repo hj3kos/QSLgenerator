@@ -12,9 +12,11 @@ from PIL import ImageTk
 from tkinter import filedialog
 
 path_foto = ''
+headers=[]
 TINT_COLOR = (0, 0, 0)  # Black
 TRANSPARENCY = .65  # Degree of solidity, 0-100%
 OPACITY = int(255 * TRANSPARENCY)
+invalid = '<>:"/\|?* '
 
 def ReadADIF (importFile):
     adif = open(importFile, 'r')
@@ -73,7 +75,8 @@ def ReadADIF (importFile):
             logLines[x][0] = logLines[x][0].replace("<", "")
             if logLines[x][0] not in headerRow:
                 headerRow.append(logLines[x][0])
-
+    headerRow.sort()
+    header.append(headerRow)
     #build rows, and add to data to matching column
     #row needs to be sorted to match header
     tempQso = headerRow.copy()
@@ -97,7 +100,7 @@ def ReadADIF (importFile):
             data.append(dataRow)
             dataRow = []
             tempQso = headerRow.copy()
-    return data
+    return data,header
 
 def Generador_Imagenes( dia,
                         mes,
@@ -112,7 +115,7 @@ def Generador_Imagenes( dia,
     global path_foto
      
     img = Image.open(path_foto.name)
-    img = img.convert("RGBA")
+    img = img.convert("RGBA").resize((1800, 1200))
     overlay = Image.new('RGBA', img.size, TINT_COLOR+(0,))
     draw = ImageDraw.Draw(overlay) 
     font = ImageFont.truetype("Roboto-Regular.ttf", 40)
@@ -152,25 +155,30 @@ def Generador_Imagenes( dia,
     isExist = os.path.exists("qsl")
     if not isExist:
        os.makedirs("qsl")
-    img.save("qsl/"+licencia+'_'+anio+'_'+mes+'_'+dia+'.png')
+
+    filename=licencia+'_'+anio+'_'+mes+'_'+dia+'.png'
+    for char in invalid:
+        filename = filename.replace(char, '-')
+    img.save("qsl/"+filename)
 
 
 def getAdif ():
     import_file_path = filedialog.askopenfilename()
-    shape = ReadADIF (import_file_path)
+    shape,headers = ReadADIF (import_file_path)
+    headers=[x.lower() for x in headers[0]]
     cantidad = len(shape)
     print(cantidad)
     for i in range(0,cantidad):
         print(shape[i])
-        dia = str(shape[i][4][-3:])
-        mes =  str(shape[i][4][-5:-3])
-        anio =  str(shape[i][4][:4])
-        licencia = str(shape[i][0])
-        hora =  str(shape[i][5][:2]+':'+shape[i][5][2:4])
-        mhz =  str(shape[i][3])
-        rcvd =  str(shape[i][6])
-        sent =  str(shape[i][7])
-        mode =  str(shape[i][1])
+        dia = str(shape[i][headers.index("qso_date")][6:])
+        mes =  str(shape[i][headers.index("qso_date")][4:6])
+        anio =  str(shape[i][headers.index("qso_date")][:4])
+        licencia = str(shape[i][headers.index("call")])
+        hora =  str(shape[i][headers.index("time_on")][:2]+':'+shape[i][headers.index("time_on")][2:4])
+        mhz =  str(shape[i][headers.index("freq")])
+        rcvd =  str(shape[i][headers.index("rst_rcvd")])
+        sent =  str(shape[i][headers.index("rst_sent")])
+        mode =  str(shape[i][headers.index("mode")])
         print(dia+''+mes+''+anio+''+licencia+''+hora+''+mhz+''+sent+''+rcvd+''+mode)
         Generador_Imagenes(dia,mes,anio,licencia,hora,mhz,sent,rcvd,mode)
 
